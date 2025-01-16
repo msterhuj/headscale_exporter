@@ -1,5 +1,3 @@
-go.mod
-
 module github.com/msterhuj/headscale_exporter
 
 go 1.23.4
