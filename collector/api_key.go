@@ -32,7 +32,7 @@ type ApiKey struct {
 	// todo convert to date
 }
 
-func (e Exporter) gatherApiKeys(ch chan<- prometheus.Metric) {
+func (e Exporter) gatherApiKeys(ch chan<- prometheus.Metric) (ApiKeysResponce, error) {
 	start := time.Now()
 	defer func() {
 		e.logger.Debug("Gathering api keys completed", "seconds", time.Since(start).Seconds())
@@ -42,10 +42,11 @@ func (e Exporter) gatherApiKeys(ch chan<- prometheus.Metric) {
 	responseData, err := e.queryPath("/apikey")
 	if err != nil {
 		e.logger.Error("Error gathering api keys", "error", err)
-		return
+		return responseObject, err
 	}
 	e.logger.Debug("Parsing api keys response", "response", string(responseData))
 	json.Unmarshal(responseData, &responseObject)
 	total_api_keys := len(responseObject.ApiKeys)
 	ch <- headscale_api_keys.mustNewConstMetric(float64(total_api_keys))
+	return responseObject, nil
 }

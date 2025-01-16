@@ -22,32 +22,25 @@ type UserResponce struct {
 }
 
 type User struct {
-	ID        string `json:"id"`
+	Id        string `json:"id"`
 	Name      string `json:"name"`
 	CreatedAt string `json:"createdAt"`
 	// todo convert to date
 }
 
-func (e Exporter) getUser() (UserResponce, error) {
-	var responseObject UserResponce
-	responseData, err := e.queryPath("/user")
-	if err != nil {
-		return responseObject, err
-	}
-	json.Unmarshal(responseData, &responseObject)
-	return responseObject, nil
-}
-
-func (e Exporter) gatherUsers(ch chan<- prometheus.Metric) {
+func (e Exporter) gatherUsers(ch chan<- prometheus.Metric) (UserResponce, error) {
 	start := time.Now()
 	defer func() {
 		e.logger.Debug("Gathering users completed", "seconds", time.Since(start).Seconds())
 	}()
-	responseObject, err := e.getUser()
+	var responseObject UserResponce
+	responseData, err := e.queryPath("/user")
 	if err != nil {
 		e.logger.Error("Error gathering users", "error", err)
-		return
+		return responseObject, err
 	}
+	json.Unmarshal(responseData, &responseObject)
 	total_users := len(responseObject.Users)
 	ch <- headscale_user.mustNewConstMetric(float64(total_users))
+	return responseObject, nil
 }
