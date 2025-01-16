@@ -4,9 +4,9 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/alecthomas/kingpin/v2"
+	"github.com/msterhuj/headscale_exporter/collector"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/promslog"
@@ -16,67 +16,14 @@ import (
 	"github.com/prometheus/exporter-toolkit/web/kingpinflag"
 )
 
-const (
-	namespace = "headscale"
-)
-
 // Parameter
-type CollectorConfig struct {
-	Address string
-}
 
 var (
-	conf   = CollectorConfig{}
+	conf   = collector.CollectorConfig{}
 	logger *slog.Logger
 )
 
 // define metrics structure and list
-type typedDesc struct {
-	desc      *prometheus.Desc
-	valueType prometheus.ValueType
-}
-
-func (d *typedDesc) mustNewConstMetric(value float64, labels ...string) prometheus.Metric {
-	return prometheus.MustNewConstMetric(d.desc, d.valueType, value, labels...)
-}
-
-var (
-	up = typedDesc{
-		prometheus.NewDesc(
-			prometheus.BuildFQName(namespace, "", "up"),
-			"Headscale UP", // help
-			nil,            //[]string{"host"}, // label dynamique
-			nil,            // label static
-		),
-		prometheus.GaugeValue,
-	}
-)
-
-// Exporter with collector
-type Exporter struct {
-	address string
-
-	logger *slog.Logger
-}
-
-func NewExporter(config CollectorConfig, logger *slog.Logger) Exporter {
-	return Exporter{
-		address: conf.Address,
-		logger:  logger,
-	}
-}
-
-func (e Exporter) Describe(ch chan<- *prometheus.Desc) {}
-
-func (e Exporter) Collect(ch chan<- prometheus.Metric) {
-	start := time.Now()
-	logger.Debug("Scrape starting")
-	defer func() {
-		logger.Debug("Scrape completed", "seconds", time.Since(start).Seconds())
-	}()
-
-	ch <- up.mustNewConstMetric(1)
-}
 
 func main() {
 	// parse args
@@ -87,7 +34,7 @@ func main() {
 
 	metricsPath := kingpin.Flag(
 		"web.telemetry-path",
-		"Path under which to exporse metrics.",
+		"Path under which to expose metrics.",
 	).Default("/metrics").String()
 
 	toolkitFlags := kingpinflag.AddFlags(kingpin.CommandLine, ":9191")
@@ -103,7 +50,7 @@ func main() {
 	logger.Info("Starting headscale_exporter", "version", version.Info())
 
 	// register exporter metrics
-	exporter := NewExporter(conf, logger)
+	exporter := collector.NewExporter(conf, logger)
 	prometheus.MustRegister(exporter)
 
 	// handle data
