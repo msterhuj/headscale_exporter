@@ -1,7 +1,9 @@
 package collector
 
 import (
+	"io"
 	"log/slog"
+	"net/http"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -13,15 +15,17 @@ const (
 
 type CollectorConfig struct {
 	Address string
+	Token   string
 }
 
+// define all metrics here
 var (
-	up = typedDesc{
+	headscale_api_keys = typedDesc{
 		prometheus.NewDesc(
-			prometheus.BuildFQName(namespace, "", "up"),
-			"Headscale UP", // help
-			nil,            //[]string{"host"}, // label dynamique
-			nil,            // label static
+			prometheus.BuildFQName(namespace, "", "headscale_api_keys"),
+			"Number of API keys",
+			nil, //[]string{"host"}, // label dynamique
+			nil, // label static
 		),
 		prometheus.GaugeValue,
 	}
@@ -38,14 +42,19 @@ func (d *typedDesc) mustNewConstMetric(value float64, labels ...string) promethe
 
 type Exporter struct {
 	address string
-
-	logger *slog.Logger
+	headers http.Header
+	logger  *slog.Logger
 }
 
 func NewExporter(config CollectorConfig, logger *slog.Logger) Exporter {
 	return Exporter{
 		address: config.Address,
-		logger:  logger,
+		headers: http.Header{
+			"Content-Type":  {"application/json"},
+			"Authorization": {"Bearer " + config.Token},
+			"User-Agent":    {"headscale_exporter"},
+		},
+		logger: logger,
 	}
 }
 
@@ -57,6 +66,37 @@ func (e Exporter) Collect(ch chan<- prometheus.Metric) {
 	defer func() {
 		e.logger.Debug("Scrape completed", "seconds", time.Since(start).Seconds())
 	}()
+	e.gatherApiKeys(ch)
+}
 
-	ch <- up.mustNewConstMetric(1)
+func (e Exporter) queryPath(path string) ([]byte, error) {
+	client := http.Client{}
+	req, err := http.NewRequest("GET", e.address+path, nil)
+	req.Header = e.headers
+	if err != nil {
+		e.logger.Error("Failed to build new request", "error", err)
+		return nil, err
+	}
+	res, err := client.Do(req)
+	if err != nil {
+		e.logger.Error("Failed request on", "path", path, "error", err)
+		return nil, err
+	}
+	responseData, err := io.ReadAll(res.Body)
+	if err != nil {
+		e.logger.Error("Failed to read response", "error", err)
+		return nil, err
+	}
+	return responseData, nil
+}
+
+func (e Exporter) ValidateToken() bool {
+	e.logger.Debug("Validating token...")
+	_, err := e.queryPath("/apikey")
+	if err != nil {
+		e.logger.Error("Invalid token", "error", err)
+		return false
+	}
+	e.logger.Debug("Token is valid")
+	return true
 }

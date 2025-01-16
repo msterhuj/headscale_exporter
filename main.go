@@ -23,14 +23,17 @@ var (
 	logger *slog.Logger
 )
 
-// define metrics structure and list
-
 func main() {
 	// parse args
 	kingpin.Flag(
 		"headscale.endpoint",
 		"Endpoint of the headscale API",
-	).Default("127.0.0.1:8080").StringVar(&conf.Address)
+	).Default("http://127.0.0.1:8080/api/v1").StringVar(&conf.Address)
+
+	kingpin.Flag(
+		"headscale.token",
+		"Token for the headscale API",
+	).Required().StringVar(&conf.Token)
 
 	metricsPath := kingpin.Flag(
 		"web.telemetry-path",
@@ -51,6 +54,9 @@ func main() {
 
 	// register exporter metrics
 	exporter := collector.NewExporter(conf, logger)
+	if !exporter.ValidateToken() {
+		os.Exit(1)
+	}
 	prometheus.MustRegister(exporter)
 
 	// handle data
