@@ -1,0 +1,29 @@
+project_name: headscale_exporter
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - main: .
+    binary: headscale_exporter
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    goarm:
+      - "7"
+archives:
+  - name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+release:
+  github:
+    owner: msterhuj
+    name: headscale_exporter
+  prerelease: false
