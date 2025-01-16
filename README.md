@@ -1,5 +1,7 @@
 # Prometheus Headscale Exporter
 
+[![lint](https://github.com/msterhuj/headscale_exporter/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/msterhuj/headscale_exporter/actions/workflows/lint.yml)
+
 This is a simple exporter for headscale its aim to export data not exported by the headscale API/Metrics endpoint.
 
 This is a work in progress and will be updated with more metrics, options, filters, etc.

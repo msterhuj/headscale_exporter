@@ -55,10 +55,23 @@ func (e Exporter) Collect(ch chan<- prometheus.Metric) {
 	defer func() {
 		e.logger.Debug("Scrape completed", "seconds", time.Since(start).Seconds())
 	}()
-	e.gatherApiKeys(ch)
-	e.gatherUsers(ch)
-	e.gatherNodes(ch)
-	e.gatherPolicy(ch)
+	var err error
+	_, err = e.gatherApiKeys(ch)
+	if err != nil {
+		e.logger.Error("Error gathering api keys", "error", err)
+	}
+	_, err = e.gatherUsers(ch)
+	if err != nil {
+		e.logger.Error("Error gathering users", "error", err)
+	}
+	_, err = e.gatherNodes(ch)
+	if err != nil {
+		e.logger.Error("Error gathering nodes", "error", err)
+	}
+	_, err = e.gatherPolicy(ch)
+	if err != nil {
+		e.logger.Error("Error gathering policy", "error", err)
+	}
 }
 
 func (e Exporter) queryPath(path string) ([]byte, error) {

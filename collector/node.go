@@ -60,7 +60,11 @@ func (e Exporter) gatherNodes(ch chan<- prometheus.Metric) (NodeResponce, error)
 		return responseObject, err
 	}
 	e.logger.Debug("Parsing nodes response", "response", string(responseData))
-	json.Unmarshal(responseData, &responseObject)
+	err = json.Unmarshal(responseData, &responseObject)
+	if err != nil {
+		e.logger.Error("Error parsing nodes response", "error", err)
+		return responseObject, err
+	}
 
 	// Count nodes
 	total_nodes := len(responseObject.Nodes)

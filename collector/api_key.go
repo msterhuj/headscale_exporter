@@ -45,7 +45,11 @@ func (e Exporter) gatherApiKeys(ch chan<- prometheus.Metric) (ApiKeysResponce, e
 		return responseObject, err
 	}
 	e.logger.Debug("Parsing api keys response", "response", string(responseData))
-	json.Unmarshal(responseData, &responseObject)
+	err = json.Unmarshal(responseData, &responseObject)
+	if err != nil {
+		e.logger.Error("Error parsing api keys response", "error", err)
+		return responseObject, err
+	}
 	total_api_keys := len(responseObject.ApiKeys)
 	ch <- headscale_api_keys.mustNewConstMetric(float64(total_api_keys))
 	return responseObject, nil

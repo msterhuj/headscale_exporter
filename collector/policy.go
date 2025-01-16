@@ -78,8 +78,17 @@ func (e Exporter) gatherPolicy(ch chan<- prometheus.Metric) (Policy, error) {
 		e.logger.Error("Error gathering policy", "error", err)
 		return policy, err
 	}
-	json.Unmarshal(responseData, &responseObject)
-	json.Unmarshal([]byte(responseObject.Policies), &policy)
+	err = json.Unmarshal(responseData, &responseObject)
+	if err != nil {
+		e.logger.Error("Error parsing policy response", "error", err)
+		return policy, err
+	}
+
+	err = json.Unmarshal([]byte(responseObject.Policies), &policy)
+	if err != nil {
+		e.logger.Error("Error parsing policy", "error", err)
+		return policy, err
+	}
 
 	total_policies := len(policy.Acls)
 	ch <- headscale_policy_acl.mustNewConstMetric(float64(total_policies))

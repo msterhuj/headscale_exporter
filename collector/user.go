@@ -39,7 +39,12 @@ func (e Exporter) gatherUsers(ch chan<- prometheus.Metric) (UserResponce, error)
 		e.logger.Error("Error gathering users", "error", err)
 		return responseObject, err
 	}
-	json.Unmarshal(responseData, &responseObject)
+	err = json.Unmarshal(responseData, &responseObject)
+	if err != nil {
+		e.logger.Error("Error parsing users response", "error", err)
+		return responseObject, err
+	}
+
 	total_users := len(responseObject.Users)
 	ch <- headscale_user.mustNewConstMetric(float64(total_users))
 	return responseObject, nil
