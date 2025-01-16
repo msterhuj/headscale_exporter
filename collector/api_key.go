@@ -10,7 +10,7 @@ import (
 var (
 	headscale_api_keys = typedDesc{
 		prometheus.NewDesc(
-			prometheus.BuildFQName(namespace, "", "headscale_api_keys"),
+			prometheus.BuildFQName(namespace, "", "api_keys"),
 			"Number of API keys",
 			nil, //[]string{"host"}, // label dynamique
 			nil, // label static

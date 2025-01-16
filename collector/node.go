@@ -10,14 +10,14 @@ import (
 var (
 	headscale_node = typedDesc{
 		desc: prometheus.NewDesc(
-			prometheus.BuildFQName(namespace, "", "headscale_node"),
+			prometheus.BuildFQName(namespace, "", "node"),
 			"Number of nodes", nil, nil, // label static
 		),
 		valueType: prometheus.GaugeValue,
 	}
 	headscale_node_online = typedDesc{
 		desc: prometheus.NewDesc(
-			prometheus.BuildFQName(namespace, "", "headscale_node_online"),
+			prometheus.BuildFQName(namespace, "", "node_online"),
 			"Number of online nodes", nil, nil, // label static
 		),
 		valueType: prometheus.GaugeValue,

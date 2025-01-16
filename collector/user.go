@@ -10,7 +10,7 @@ import (
 var (
 	headscale_user = typedDesc{
 		desc: prometheus.NewDesc(
-			prometheus.BuildFQName(namespace, "", "headscale_user"),
+			prometheus.BuildFQName(namespace, "", "user"),
 			"Number of users", nil, nil, // label static
 		),
 		valueType: prometheus.GaugeValue,

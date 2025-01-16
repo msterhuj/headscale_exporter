@@ -58,6 +58,7 @@ func (e Exporter) Collect(ch chan<- prometheus.Metric) {
 	e.gatherApiKeys(ch)
 	e.gatherUsers(ch)
 	e.gatherNodes(ch)
+	e.gatherPolicy(ch)
 }
 
 func (e Exporter) queryPath(path string) ([]byte, error) {
