@@ -2,8 +2,21 @@ package collector
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+)
+
+var (
+	headscale_api_keys = typedDesc{
+		prometheus.NewDesc(
+			prometheus.BuildFQName(namespace, "", "headscale_api_keys"),
+			"Number of API keys",
+			nil, //[]string{"host"}, // label dynamique
+			nil, // label static
+		),
+		prometheus.GaugeValue,
+	}
 )
 
 type ApiKeysResponce struct {
@@ -20,12 +33,18 @@ type ApiKey struct {
 }
 
 func (e Exporter) gatherApiKeys(ch chan<- prometheus.Metric) {
+	start := time.Now()
+	defer func() {
+		e.logger.Debug("Gathering api keys completed", "seconds", time.Since(start).Seconds())
+	}()
 	var responseObject ApiKeysResponce
+	e.logger.Debug("Gathering api keys")
 	responseData, err := e.queryPath("/apikey")
 	if err != nil {
 		e.logger.Error("Error gathering api keys", "error", err)
 		return
 	}
+	e.logger.Debug("Parsing api keys response", "response", string(responseData))
 	json.Unmarshal(responseData, &responseObject)
 	total_api_keys := len(responseObject.ApiKeys)
 	ch <- headscale_api_keys.mustNewConstMetric(float64(total_api_keys))

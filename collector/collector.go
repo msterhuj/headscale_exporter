@@ -19,17 +19,6 @@ type CollectorConfig struct {
 }
 
 // define all metrics here
-var (
-	headscale_api_keys = typedDesc{
-		prometheus.NewDesc(
-			prometheus.BuildFQName(namespace, "", "headscale_api_keys"),
-			"Number of API keys",
-			nil, //[]string{"host"}, // label dynamique
-			nil, // label static
-		),
-		prometheus.GaugeValue,
-	}
-)
 
 type typedDesc struct {
 	desc      *prometheus.Desc
@@ -67,6 +56,7 @@ func (e Exporter) Collect(ch chan<- prometheus.Metric) {
 		e.logger.Debug("Scrape completed", "seconds", time.Since(start).Seconds())
 	}()
 	e.gatherApiKeys(ch)
+	e.gatherUsers(ch)
 }
 
 func (e Exporter) queryPath(path string) ([]byte, error) {
